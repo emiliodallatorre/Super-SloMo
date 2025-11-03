@@ -152,4 +152,4 @@ Parts of the code are based on [TheFairBear/Super-SlowMo](https://github.com/The
 
 ## Changelog / Credits
 
-- Added support for Apple's Metal (MPS) backend on macOS and improved multi-backend selection. Installation notes for MPS are linked above. (Modifications and maintenance by Emilio Dalla Torre — https://github.com/emiliodallatorre)
+Added support for Apple's Metal (MPS) backend on macOS and improved multi-backend selection. Installation notes for MPS are linked above. (Modifications and maintenance by Emilio Dalla Torre — https://github.com/emiliodallatorre)
