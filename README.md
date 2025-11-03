@@ -26,10 +26,10 @@ This repository now supports multiple compute backends: CUDA (GPU), Apple's Meta
 
 Install:
 
-- PyTorch (see the official install selector for the correct command for your platform and desired backend): https://pytorch.org/get-started/locally/
+- PyTorch (see the official install selector for the correct command for your platform and desired backend): <https://pytorch.org/get-started/locally/>
 
-	- For CUDA-enabled GPUs, choose the appropriate CUDA toolkit and install the matching PyTorch build.
-	- For macOS with Apple Silicon or Intel (where supported), install a PyTorch build with MPS (Metal) support. See the PyTorch notes on MPS for details and requirements: https://pytorch.org/docs/stable/notes/mps.html
+  - For CUDA-enabled GPUs, choose the appropriate CUDA toolkit and install the matching PyTorch build.
+  - For macOS with Apple Silicon or Intel (where supported), install a PyTorch build with MPS (Metal) support. See the PyTorch notes on MPS for details and requirements: <https://pytorch.org/docs/stable/notes/mps.html>
 
 Examples (use the official selector to get up-to-date commands):
 
@@ -163,6 +163,8 @@ Parts of the code are based on [TheFairBear/Super-SlowMo](https://github.com/The
 
 ## Changelog / Credits
 
-Added support for Apple's Metal (MPS) backend on macOS and improved multi-backend selection. Installation notes for MPS are linked above. Modifications and maintenance by Emilio Dalla Torre ([emiliodallatorre](https://github.com/emiliodallatorre)).
+Added support for Apple's Metal (MPS) backend on macOS and improved multi-backend selection. Installation notes for MPS are linked above.
 
-Also added a convenience shell wrapper `sslomo.sh` (project root) to simplify converting single videos and to optionally auto-download the pretrained checkpoint; the script and the documentation were added/maintained by Emilio Dalla Torre.
+Also added a convenience shell wrapper `sslomo.sh` (project root) to simplify converting single videos and to optionally auto-download the pretrained checkpoint.
+
+Modifications and maintenance by Emilio Dalla Torre ([emiliodallatorre](https://github.com/emiliodallatorre)).
