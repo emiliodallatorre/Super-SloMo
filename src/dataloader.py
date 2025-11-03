@@ -8,9 +8,7 @@ try:
     RESAMPLE_LANCZOS = Image.Resampling.LANCZOS
     RESAMPLE_BILINEAR = Image.Resampling.BILINEAR
 except Exception:
-    RESAMPLE_LANCZOS = getattr(
-        Image, "LANCZOS", getattr(Image, "ANTIALIAS", Image.BICUBIC)
-    )
+    RESAMPLE_LANCZOS = getattr(Image, "LANCZOS", getattr(Image, "ANTIALIAS", Image.BICUBIC))
     RESAMPLE_BILINEAR = getattr(Image, "BILINEAR", Image.BICUBIC)
 import os
 import os.path
@@ -41,16 +39,13 @@ def _make_dataset(dir):
 
     framesPath = []
     # Find and loop over all the clips in root `dir`.
-    for index, folder in enumerate(os.listdir(dir)):
+    for folder in sorted(os.listdir(dir)):
         clipsFolderPath = os.path.join(dir, folder)
         # Skip items which are not folders.
-        if not (os.path.isdir(clipsFolderPath)):
+        if not os.path.isdir(clipsFolderPath):
             continue
-        framesPath.append([])
-        # Find and loop over all the frames inside the clip.
-        for image in sorted(os.listdir(clipsFolderPath)):
-            # Add path to list.
-            framesPath[index].append(os.path.join(clipsFolderPath, image))
+        images = sorted(os.listdir(clipsFolderPath))
+        framesPath.append([os.path.join(clipsFolderPath, image) for image in images])
     return framesPath
 
 
@@ -72,12 +67,8 @@ def _make_video_dataset(dir):
             1D list described above.
     """
 
-    framesPath = []
-    # Find and loop over all the frames in root `dir`.
-    for image in sorted(os.listdir(dir)):
-        # Add path to list.
-        framesPath.append(os.path.join(dir, image))
-    return framesPath
+    # Single-line comprehension for clarity
+    return [os.path.join(dir, image) for image in sorted(os.listdir(dir))]
 
 
 def _pil_loader(path, cropArea=None, resizeDim=None, frameFlip=0):
@@ -104,17 +95,29 @@ def _pil_loader(path, cropArea=None, resizeDim=None, frameFlip=0):
     # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
     with open(path, "rb") as f:
         img = Image.open(f)
-        # Resize image if specified.
-        resized_img = (
-            img.resize(resizeDim, RESAMPLE_LANCZOS) if (resizeDim != None) else img
-        )
-        # Crop image if crop area specified.
-        cropped_img = img.crop(cropArea) if (cropArea != None) else resized_img
-        # Flip image horizontally if specified.
-        flipped_img = (
-            cropped_img.transpose(Image.FLIP_LEFT_RIGHT) if frameFlip else cropped_img
-        )
-        return flipped_img.convert("RGB")
+        # Apply optional resize -> crop -> flip in sequence. Keep code compact.
+        if resizeDim is not None:
+            img = img.resize(resizeDim, RESAMPLE_LANCZOS)
+        if cropArea is not None:
+            img = img.crop(cropArea)
+        if frameFlip:
+            img = img.transpose(Image.FLIP_LEFT_RIGHT)
+        return img.convert("RGB")
+
+
+def _format_repr(obj):
+    """
+    Small helper to avoid repeated __repr__ implementations.
+    """
+    class_name = obj.__class__.__name__
+    root = getattr(obj, "root", "")
+    transforms = getattr(obj, "transform", None)
+    fmt_str = f"Dataset {class_name}\n"
+    fmt_str += f"    Number of datapoints: {len(getattr(obj, 'framesPath', []))}\n"
+    fmt_str += f"    Root Location: {root}\n"
+    tmp = "    Transforms (if any): "
+    fmt_str += "{0}{1}\n".format(tmp, transforms.__repr__().replace("\n", "\n" + " " * len(tmp))) if transforms is not None else fmt_str
+    return fmt_str
 
 
 class SuperSloMo(data.Dataset):
@@ -200,8 +203,33 @@ class SuperSloMo(data.Dataset):
         self.root = root
         self.transform = transform
         self.train = train
-
         self.framesPath = framesPath
+
+    def _sample_frame_range(self, index):
+        """Extract the training/validation sampling logic so __getitem__ stays compact."""
+        if self.train:
+            # Data Augmentation
+            firstFrame = random.randint(0, 3)
+            cropX = random.randint(0, self.cropX0)
+            cropY = random.randint(0, self.cropY0)
+            cropArea = (cropX, cropY, cropX + self.randomCropSize[0], cropY + self.randomCropSize[1])
+            IFrameIndex = random.randint(firstFrame + 1, firstFrame + 7)
+            if random.randint(0, 1):
+                frameRange = [firstFrame, IFrameIndex, firstFrame + 8]
+                returnIndex = IFrameIndex - firstFrame - 1
+            else:
+                frameRange = [firstFrame + 8, IFrameIndex, firstFrame]
+                returnIndex = firstFrame - IFrameIndex + 7
+            randomFrameFlip = random.randint(0, 1)
+        else:
+            # Fixed settings for validation/test
+            firstFrame = 0
+            cropArea = (0, 0, self.randomCropSize[0], self.randomCropSize[1])
+            IFrameIndex = (index) % 7 + 1
+            returnIndex = IFrameIndex - 1
+            frameRange = [0, IFrameIndex, 8]
+            randomFrameFlip = 0
+        return frameRange, cropArea, randomFrameFlip, returnIndex
 
     def __getitem__(self, index):
         """
@@ -227,50 +255,11 @@ class SuperSloMo(data.Dataset):
         """
 
         sample = []
+        # Use extracted helper to get sampling info (keeps this method short)
+        frameRange, cropArea, randomFrameFlip, returnIndex = self._sample_frame_range(index)
 
-        if self.train:
-            ### Data Augmentation ###
-            # To select random 9 frames from 12 frames in a clip
-            firstFrame = random.randint(0, 3)
-            # Apply random crop on the 9 input frames
-            cropX = random.randint(0, self.cropX0)
-            cropY = random.randint(0, self.cropY0)
-            cropArea = (
-                cropX,
-                cropY,
-                cropX + self.randomCropSize[0],
-                cropY + self.randomCropSize[1],
-            )
-            # Random reverse frame
-            # frameRange = range(firstFrame, firstFrame + 9) if (random.randint(0, 1)) else range(firstFrame + 8, firstFrame - 1, -1)
-            IFrameIndex = random.randint(firstFrame + 1, firstFrame + 7)
-            if random.randint(0, 1):
-                frameRange = [firstFrame, IFrameIndex, firstFrame + 8]
-                returnIndex = IFrameIndex - firstFrame - 1
-            else:
-                frameRange = [firstFrame + 8, IFrameIndex, firstFrame]
-                returnIndex = firstFrame - IFrameIndex + 7
-            # Random flip frame
-            randomFrameFlip = random.randint(0, 1)
-        else:
-            # Fixed settings to return same samples every epoch.
-            # For validation/test sets.
-            firstFrame = 0
-            cropArea = (0, 0, self.randomCropSize[0], self.randomCropSize[1])
-            IFrameIndex = (index) % 7 + 1
-            returnIndex = IFrameIndex - 1
-            frameRange = [0, IFrameIndex, 8]
-            randomFrameFlip = 0
-
-        # Loop over for all frames corresponding to the `index`.
         for frameIndex in frameRange:
-            # Open image using pil and augment the image.
-            image = _pil_loader(
-                self.framesPath[index][frameIndex],
-                cropArea=cropArea,
-                frameFlip=randomFrameFlip,
-            )
-            # Apply transformation if specified.
+            image = _pil_loader(self.framesPath[index][frameIndex], cropArea=cropArea, frameFlip=randomFrameFlip)
             if self.transform is not None:
                 image = self.transform(image)
             sample.append(image)
@@ -299,14 +288,7 @@ class SuperSloMo(data.Dataset):
                 info.
         """
 
-        fmt_str = "Dataset " + self.__class__.__name__ + "\n"
-        fmt_str += "    Number of datapoints: {}\n".format(self.__len__())
-        fmt_str += "    Root Location: {}\n".format(self.root)
-        tmp = "    Transforms (if any): "
-        fmt_str += "{0}{1}\n".format(
-            tmp, self.transform.__repr__().replace("\n", "\n" + " " * len(tmp))
-        )
-        return fmt_str
+        return _format_repr(self)
 
 
 class UCI101Test(data.Dataset):
@@ -424,14 +406,7 @@ class UCI101Test(data.Dataset):
                 info.
         """
 
-        fmt_str = "Dataset " + self.__class__.__name__ + "\n"
-        fmt_str += "    Number of datapoints: {}\n".format(self.__len__())
-        fmt_str += "    Root Location: {}\n".format(self.root)
-        tmp = "    Transforms (if any): "
-        fmt_str += "{0}{1}\n".format(
-            tmp, self.transform.__repr__().replace("\n", "\n" + " " * len(tmp))
-        )
-        return fmt_str
+        return _format_repr(self)
 
 
 class Video(data.Dataset):
@@ -548,11 +523,4 @@ class Video(data.Dataset):
                 info.
         """
 
-        fmt_str = "Dataset " + self.__class__.__name__ + "\n"
-        fmt_str += "    Number of datapoints: {}\n".format(self.__len__())
-        fmt_str += "    Root Location: {}\n".format(self.root)
-        tmp = "    Transforms (if any): "
-        fmt_str += "{0}{1}\n".format(
-            tmp, self.transform.__repr__().replace("\n", "\n" + " " * len(tmp))
-        )
-        return fmt_str
+        return _format_repr(self)
