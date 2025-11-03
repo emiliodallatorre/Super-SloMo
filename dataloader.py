@@ -1,5 +1,15 @@
 import torch.utils.data as data
 from PIL import Image
+
+# Pillow resampling compatibility: newer Pillow versions moved constants to
+# Image.Resampling. Use those when available, otherwise fall back to older
+# attributes. This avoids AttributeError: module 'PIL.Image' has no attribute 'ANTIALIAS'.
+try:
+    RESAMPLE_LANCZOS = Image.Resampling.LANCZOS
+    RESAMPLE_BILINEAR = Image.Resampling.BILINEAR
+except Exception:
+    RESAMPLE_LANCZOS = getattr(Image, 'LANCZOS', getattr(Image, 'ANTIALIAS', Image.BICUBIC))
+    RESAMPLE_BILINEAR = getattr(Image, 'BILINEAR', Image.BICUBIC)
 import os
 import os.path
 import random
@@ -94,7 +104,7 @@ def _pil_loader(path, cropArea=None, resizeDim=None, frameFlip=0):
     with open(path, 'rb') as f:
         img = Image.open(f)
         # Resize image if specified.
-        resized_img = img.resize(resizeDim, Image.ANTIALIAS) if (resizeDim != None) else img
+        resized_img = img.resize(resizeDim, RESAMPLE_LANCZOS) if (resizeDim != None) else img
         # Crop image if crop area specified.
         cropped_img = img.crop(cropArea) if (cropArea != None) else resized_img
         # Flip image horizontally if specified.

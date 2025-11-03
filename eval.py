@@ -15,6 +15,14 @@ from torch.functional import F
 torch.set_grad_enabled(False)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# Pillow resampling compatibility
+try:
+    RESAMPLE_LANCZOS = Image.Resampling.LANCZOS
+    RESAMPLE_BILINEAR = Image.Resampling.BILINEAR
+except Exception:
+    RESAMPLE_LANCZOS = getattr(Image, 'LANCZOS', getattr(Image, 'ANTIALIAS', Image.BICUBIC))
+    RESAMPLE_BILINEAR = getattr(Image, 'BILINEAR', Image.BICUBIC)
+
 trans_forward = transforms.ToTensor()
 trans_backward = transforms.ToPILImage()
 if device != "cpu":
@@ -96,7 +104,7 @@ def load_batch(video_in, batch_size, batch, w, h):
             break
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame = Image.fromarray(frame)
-        frame = frame.resize((w, h), Image.ANTIALIAS)
+        frame = frame.resize((w, h), RESAMPLE_LANCZOS)
         frame = frame.convert('RGB')
         frame = trans_forward(frame)
         batch.append(frame)
@@ -107,7 +115,7 @@ def load_batch(video_in, batch_size, batch, w, h):
 def denorm_frame(frame, w0, h0):
     frame = frame.cpu()
     frame = trans_backward(frame)
-    frame = frame.resize((w0, h0), Image.BILINEAR)
+    frame = frame.resize((w0, h0), RESAMPLE_BILINEAR)
     frame = frame.convert('RGB')
     return np.array(frame)[:, :, ::-1].copy()
 
