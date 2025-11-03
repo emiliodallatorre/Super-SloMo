@@ -127,6 +127,17 @@ python video_to_slomo.py --ffmpeg_dir path\to\folder\containing\ffmpeg --video p
 python video_to_slomo.py --video path/to/video.mp4 --sf N --checkpoint path/to/checkpoint.ckpt --fps M --output path/to/output.mp4
 ```
 
+### Helper script: `sslomo.sh`
+
+The repository includes a convenience shell wrapper `sslomo.sh` (at the project root) that simplifies running the converter for a single file or small batch. In short:
+
+- Usage: `./sslomo.sh input_video [sf] [fps] [checkpoint]`
+- Defaults: `sf` defaults to 4; output file is created as `input_slomo.mp4` next to the input file.
+- If a checkpoint path isn't provided, the script will attempt to download the pretrained checkpoint into `./checkpoints/` using `gdown` (if available); otherwise it prints instructions to obtain the checkpoint manually.
+- The script simply invokes the Python converter with sensible defaults and prints the final `ffmpeg`/Python command before execution.
+
+This is intended as a quick, user-friendly entry point for converting local videos. See `sslomo.sh` source for full behavior and options.
+
 If you want to convert a video from 30fps to 90fps set `fps` to 90 and `sf` to 3 (to get 3x frames than the original video).
 
 Run the following commmand for help / more info
@@ -152,4 +163,6 @@ Parts of the code are based on [TheFairBear/Super-SlowMo](https://github.com/The
 
 ## Changelog / Credits
 
-Added support for Apple's Metal (MPS) backend on macOS and improved multi-backend selection. Installation notes for MPS are linked above. (Modifications and maintenance by Emilio Dalla Torre — https://github.com/emiliodallatorre)
+Added support for Apple's Metal (MPS) backend on macOS and improved multi-backend selection. Installation notes for MPS are linked above. Modifications and maintenance by Emilio Dalla Torre ([emiliodallatorre](https://github.com/emiliodallatorre)).
+
+Also added a convenience shell wrapper `sslomo.sh` (project root) to simplify converting single videos and to optionally auto-download the pretrained checkpoint; the script and the documentation were added/maintained by Emilio Dalla Torre.
