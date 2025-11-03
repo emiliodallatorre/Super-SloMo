@@ -117,3 +117,5 @@ videos/*
 adobe240fps
 checkpoints/*
 !checkpoints/.gitkeep
+
+**/.DS_Store
