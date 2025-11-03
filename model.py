@@ -247,10 +247,10 @@ class backWarp(nn.Module):
         gridX, gridY = np.meshgrid(np.arange(W), np.arange(H))
         self.W = W
         self.H = H
-    # Ensure grids are float tensors to avoid dtype inference issues
-    # when creating tensors from numpy arrays and moving them to a device.
-    self.gridX = torch.tensor(gridX, dtype=torch.float32, device=device, requires_grad=False)
-    self.gridY = torch.tensor(gridY, dtype=torch.float32, device=device, requires_grad=False)
+        # Ensure grids are float tensors to avoid dtype inference issues
+        # when creating tensors from numpy arrays and moving them to a device.
+        self.gridX = torch.tensor(gridX, dtype=torch.float32, device=device, requires_grad=False)
+        self.gridY = torch.tensor(gridY, dtype=torch.float32, device=device, requires_grad=False)
         
     def forward(self, img, flow):
         """
