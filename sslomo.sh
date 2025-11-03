@@ -80,7 +80,7 @@ if [ -z "$CHECKPOINT" ]; then
 	fi
 fi
 
-CMD=("$PY_CMD" "video_to_slomo.py" --video "$INPUT" --sf "$SF" --output "$OUTPUT")
+CMD=("$PY_CMD" "src/video_to_slomo.py" --video "$INPUT" --sf "$SF" --output "$OUTPUT")
 if [ -n "$FPS" ]; then
 	CMD+=(--fps "$FPS")
 fi
