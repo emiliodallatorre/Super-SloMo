@@ -22,28 +22,33 @@ Results on UCF101 dataset using the [evaluation script](https://people.cs.umass.
 
 ## Prerequisites
 
-This codebase was developed and tested with pytorch 0.4.1 and CUDA 9.2 and Python 3.6.
+This repository now supports multiple compute backends: CUDA (GPU), Apple's Metal (via PyTorch MPS) on supported macOS systems, and CPU. The project was originally developed against older PyTorch versions; to use modern backends (especially MPS on macOS) install a recent PyTorch release that includes MPS support.
+
 Install:
 
-* [PyTorch](https://pytorch.org/get-started/previous-versions/)
+- PyTorch (see the official install selector for the correct command for your platform and desired backend): https://pytorch.org/get-started/locally/
 
-For GPU, run
+	- For CUDA-enabled GPUs, choose the appropriate CUDA toolkit and install the matching PyTorch build.
+	- For macOS with Apple Silicon or Intel (where supported), install a PyTorch build with MPS (Metal) support. See the PyTorch notes on MPS for details and requirements: https://pytorch.org/docs/stable/notes/mps.html
 
-```bash
-conda install pytorch=0.4.1 cuda92 torchvision==0.2.0 -c pytorch
-```
-
-For CPU, run
+Examples (use the official selector to get up-to-date commands):
 
 ```bash
-conda install pytorch-cpu=0.4.1 torchvision-cpu==0.2.0 cpuonly -c pytorch
+# Example (Linux with CUDA) - adjust versions using the PyTorch selector
+conda install pytorch torchvision -c pytorch
+
+# Example (macOS with MPS) - use the command provided at https://pytorch.org/get-started/locally/
 ```
 
-* [TensorboardX](https://github.com/lanpa/tensorboardX) for training visualization
-* [tensorflow](https://www.tensorflow.org/install/) for tensorboard
-* [matplotlib](https://matplotlib.org/users/installing.html) for training graph in notebook.
-* [tqdm](https://pypi.org/project/tqdm/) for progress bar in [video_to_slomo.py](video_to_slomo.py)
-* [numpy](https://scipy.org/install.html)
+Other Python packages used by the repo:
+
+- [TensorboardX](https://github.com/lanpa/tensorboardX) for training visualization
+- [tensorflow](https://www.tensorflow.org/install/) for tensorboard (optional)
+- [matplotlib](https://matplotlib.org/users/installing.html) for training graphs in the notebook
+- [tqdm](https://pypi.org/project/tqdm/) for progress bars in `video_to_slomo.py`
+- [numpy](https://numpy.org/install/)
+
+This project contains `platform_helper.py` which will select the best available backend at runtime (preferring CUDA, then MPS on macOS where available, then CPU).
 
 ## Training
 
@@ -110,14 +115,16 @@ You can download the pretrained model trained on adobe240fps dataset [here](http
 
 ### Video Converter
 
-You can convert any video to a slomo or high fps video (or both) using [video_to_slomo.py](video_to_slomo.py). Use the command
+You can convert any video to a slomo or high-fps video (or both) using `video_to_slomo.py`. The script will auto-select the best PyTorch backend available on your machine (CUDA / MPS / CPU) via `platform_helper.py`.
+
+Example usage:
 
 ```bash
-# Windows
-python video_to_slomo.py --ffmpeg path\to\folder\containing\ffmpeg --video path\to\video.mp4 --sf N --checkpoint path\to\checkpoint.ckpt --fps M --output path\to\output.mkv
+# Windows (specify folder containing ffmpeg.exe)
+python video_to_slomo.py --ffmpeg_dir path\to\folder\containing\ffmpeg --video path\to\video.mp4 --sf N --checkpoint path\to\checkpoint.ckpt --fps M --output path\to\output.mp4
 
-# Linux
-python video_to_slomo.py --video path\to\video.mp4 --sf N --checkpoint path\to\checkpoint.ckpt --fps M --output path\to\output.mkv
+# Linux / macOS
+python video_to_slomo.py --video path/to/video.mp4 --sf N --checkpoint path/to/checkpoint.ckpt --fps M --output path/to/output.mp4
 ```
 
 If you want to convert a video from 30fps to 90fps set `fps` to 90 and `sf` to 3 (to get 3x frames than the original video).
@@ -141,4 +148,8 @@ More info TBA
 
 ## References
 
-Parts of the code is based on [TheFairBear/Super-SlowMo](https://github.com/TheFairBear/Super-SlowMo)
+Parts of the code are based on [TheFairBear/Super-SlowMo](https://github.com/TheFairBear/Super-SlowMo).
+
+## Changelog / Credits
+
+- Added support for Apple's Metal (MPS) backend on macOS and improved multi-backend selection. Installation notes for MPS are linked above. (Modifications and maintenance by Emilio Dalla Torre — https://github.com/emiliodallatorre)
