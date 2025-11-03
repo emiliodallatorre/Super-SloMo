@@ -13,6 +13,7 @@ import model
 import dataloader
 from math import log10
 import datetime
+from platform_helper import get_torch_backend
 from tensorboardX import SummaryWriter
 
 
@@ -40,8 +41,7 @@ writer = SummaryWriter('log')
 
 ###Initialize flow computation and arbitrary-time flow interpolation CNNs.
 
-
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device(get_torch_backend())
 flowComp = model.UNet(6, 4)
 flowComp.to(device)
 ArbTimeFlowIntrp = model.UNet(20, 5)

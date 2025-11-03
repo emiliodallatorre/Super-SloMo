@@ -12,6 +12,8 @@ import dataloader
 import platform
 from tqdm import tqdm
 
+from platform_helper import get_torch_backend
+
 # For parsing commandline arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--ffmpeg_dir", type=str, default="", help='path to ffmpeg.exe')
@@ -128,7 +130,7 @@ def main():
         exit(1)
 
     # Initialize transforms
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device(get_torch_backend())
 
     mean = [0.429, 0.431, 0.397]
     std  = [1, 1, 1]

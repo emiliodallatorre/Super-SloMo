@@ -10,10 +10,11 @@ import numpy as np
 import model
 from torchvision import transforms
 from torch.functional import F
+from platform_helper import get_torch_backend
 
 
 torch.set_grad_enabled(False)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device(get_torch_backend())
 
 # Pillow resampling compatibility
 try:
