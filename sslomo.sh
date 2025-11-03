@@ -37,7 +37,7 @@ SF="${2:-4}"
 FPS="${3:-}"
 # precedence: explicit fourth arg -> env CHECKPOINT -> empty
 CHECKPOINT="${4:-${CHECKPOINT:-}}"
-OUTPUT="${INPUT%.*}_slomo.mkv"
+OUTPUT="${INPUT%.*}_slomo.mp4"
 
 PY_CMD="python"
 
