@@ -109,3 +109,11 @@ output.mp4
 
 # ignore folder
 tmpSuperSloMo/
+.tmpSuperSloMo/
+
+# Added by @emiliodallatorre
+videos/*
+!videos/.gitkeep
+adobe240fps
+checkpoints/*
+!checkpoints/.gitkeep
